@@ -1,0 +1,51 @@
+# Import python packages
+import streamlit as st
+from snowflake.snowpark.context import get_active_session
+from snowflake.snowpark.functions import col
+
+# Write directly to the app
+st.title(f"Customize Smoothie order form: {st.__version__}")
+st.write(
+  """Replace this example with your own code!
+  **And if you're new to Streamlit,** check
+  out our easy-to-follow guides at
+  [docs.streamlit.io](https://docs.streamlit.io).
+  """
+)
+
+
+name_on_order = st.text_input("Name on Smoothie")
+st.write("The Name on your smoothie will be:", name_on_order)
+
+# option = st.selectbox(
+#     "what is your favourite friuit?",
+#     ("Banana", "Strawberry", "Peaches"),
+# )
+
+# st.write("Your favourite fruit is:", option)
+
+session = get_active_session()
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'))
+# st.dataframe(data=my_dataframe, use_container_width=True)
+ingredients_list =st.multiselect('choose upto 5 ingredients:',my_dataframe, max_selections=5) 
+if ingredients_list:    
+    
+    # st.write(ingredients_list)
+    # st.text(ingredients_list)
+    ingredients_string= '' 
+    
+    for fruits_choosen in ingredients_list:
+        ingredients_string+= fruits_choosen+' '
+   
+    # st.write(ingredients_string)
+
+    my_insert_stmt = """ insert into smoothies.public.orders(ingredients,name_on_order)
+                    values ('""" + ingredients_string + """', '""" + name_on_order + """')"""
+
+    # st.write(my_insert_stmt)
+    time_to_insert = st.button('submit Order')
+
+    if time_to_insert:
+        
+        session.sql(my_insert_stmt).collect()
+        st.success('Your Smoothie is ordered!', icon="✅")

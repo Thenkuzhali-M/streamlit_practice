@@ -30,8 +30,10 @@ cnx = st.connection("snowflake")
 session = cnx.session()
 
 
-my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'))
-# st.dataframe(data=my_dataframe, use_container_width=True)
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME')).select(col('SEARCH_ON'))
+st.dataframe(data=my_dataframe, use_container_width=True)
+st.stop()
+
 ingredients_list =st.multiselect('choose upto 5 ingredients:',my_dataframe, max_selections=5) 
 if ingredients_list:    
     
@@ -40,9 +42,13 @@ if ingredients_list:
     ingredients_string= '' 
     
     for fruits_choosen in ingredients_list:
-        ingredients_string+= fruits_choosen+' '
+      ingredients_string+= fruits_choosen+' '
+      st.subheader(fruits_choosen + 'Nutrition_information')
+      
+      smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon"+fruits_choosen)  
+      sf_df =  st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
    
-    # st.write(ingredients_string)
+   
 
     my_insert_stmt = """ insert into smoothies.public.orders(ingredients,name_on_order)
                     values ('""" + ingredients_string + """', '""" + name_on_order + """')"""
@@ -57,5 +63,5 @@ if ingredients_list:
 
 
 smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")  
-st.text(smoothiefroot_response.json())
-# sf_df =  st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
+# st.text(smoothiefroot_response.json())
+sf_df =  st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
